@@ -1275,6 +1275,7 @@ func Run(buildVersion string) error {
 			defer close(done)
 			if reconcileErr := reconcilePersistentChatHosts(ctx, cfg.DataDir, store, cfg.AppRunID); reconcileErr != nil {
 				log.Error("persistent chat host reconciliation on boot failed", "err", reconcileErr)
+				sentryobs.CaptureBackground(ctx, reconcileErr, "chat", "reconcile", map[string]string{"reason": "chat_host"})
 			}
 			close(persistentHostsReconciled)
 			// Reviewer-owned Chat controllers wait for persistent host reconciliation.
@@ -1289,6 +1290,7 @@ func Run(buildVersion string) error {
 			}
 			if reconcileErr := lcStack.ReconcileRuntime(ctx); reconcileErr != nil {
 				log.Error("background agent-process reconciliation on boot failed", "err", reconcileErr)
+				sentryobs.CaptureBackground(ctx, reconcileErr, "lifecycle", "reconcile", map[string]string{"reason": "runtime"})
 			}
 		}()
 		go func() {
