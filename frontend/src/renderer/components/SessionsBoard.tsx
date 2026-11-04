@@ -33,7 +33,7 @@ import { useRestoreSession } from "../hooks/useRestoreSession";
 import { useTerminateSession } from "../hooks/useTerminateSession";
 import { useCloudCp } from "../hooks/useCloudCp";
 import { useSessionParticipants } from "../hooks/useSessionParticipants";
-import { useCloudProjectsQuery, useRemoteProjectQuery, useWorkspaceQuery, workspaceQueryKeyForHost } from "../hooks/useWorkspaceQuery";
+import { useCloudProjectsQuery, useRemoteProjectQuery, useRemoteWorkspaces, useWorkspaceQuery, workspaceQueryKeyForHost } from "../hooks/useWorkspaceQuery";
 import { useCloudOffering } from "../hooks/useCloudOffering";
 import { FREESTYLE_PROVIDER, projectSandboxProvider } from "../lib/cloud-offering";
 import { BoardWelcome, ProjectBoardEmpty } from "./BoardEmptyStates";
@@ -370,6 +370,140 @@ export function SessionsBoard({ projectId, hostId }: SessionsBoardProps) {
 }
 
 /**
+ * Every project's sessions, on this machine and on each connected host, on the
+ * same lanes and card actions as a project's board. Project-only controls
+ * (orchestrator start, new task, project settings) do not exist here, so this
+ * board never starts or changes anything on its own.
+ */
+export function AllProjectsBoard() {
+	const { t } = useTranslation();
+	const navigate = useNavigate();
+	const localWorkspaceQuery = useWorkspaceQuery();
+	const remoteWorkspaces = useRemoteWorkspaces();
+	const hostCount = useConnectedHosts().length;
+	const workspaces = [...(localWorkspaceQuery.data ?? []), ...remoteWorkspaces.data];
+	const sessions = workspaces.flatMap((workspace) => workerSessions(workspace.sessions));
+	const archived = sessions
+		.filter(isArchivedSession)
+		.sort((left, right) => right.updatedAt.localeCompare(left.updatedAt));
+	const activeSessions = sessions.filter((candidate) => !isArchivedSession(candidate));
+	const boardSessions = activeSessions.map((session) =>
+		session.status === "no_signal" || session.displayStatus === "No signal"
+			? { ...session, kanbanColumn: "building" as const }
+			: session,
+	);
+	// Cloud sharing and this machine's processes are read for local sessions only.
+	const localActiveSessions = activeSessions.filter((session) => !session.hostId);
+	const participantsBySession = useSessionParticipants(localActiveSessions);
+	const { userId: cloudUserId } = useCloudCp(localActiveSessions.some((session) => Boolean(session.cloud)));
+	const columns: KanbanColumnView[] = boardKanbanColumnOrder.map((column) => getKanbanColumnView(column, t));
+	const boardLabels = sessionsBoardLabels(t);
+	const presentation = useBoardPresentation({
+		isSuccess: localWorkspaceQuery.isSuccess,
+		isError: localWorkspaceQuery.isError,
+		hasProjects: workspaces.length > 0,
+		hasWorkerSessions: sessions.length > 0,
+	});
+	const diagnostics = useDiagnosticsEnabled();
+	const memoryLight = diagnostics ? <AppMemoryIndicator /> : null;
+	const sessionMemory = useSessionMemory(undefined, true).data;
+	const memoryBySession = diagnostics ? sessionMemory : undefined;
+	const pressure = usePressureState(true);
+	const chipToneOf = useMemo(() => {
+		const now = Date.now();
+		const facts = localActiveSessions
+			.filter((session) => !isOrchestratorSession(session))
+			.map((session) => toSessionFacts(session, memoryBySession?.get(session.id), now));
+		const largest = largestSession(facts);
+		return (session: WorkspaceSession): ChipTone =>
+			chipTone(pressure ?? "fine", facts.find((f) => f.id === session.id) ?? toSessionFacts(session, memoryBySession?.get(session.id), now), largest);
+	}, [localActiveSessions, memoryBySession, pressure]);
+	const hasArchive = archived.length > 0;
+	const terminateSession = useTerminateSession();
+	const scopeKey = "all-projects";
+	const activeScopeRef = useRef(scopeKey);
+
+	const openSession = useCallback((session: WorkspaceSession) => {
+		if (session.kind === "worker") recordManualWorkerOpen(session.id, session.hostId);
+		void navigate(sessionNavigateTarget(session.workspaceId, session.id, session.hostId));
+	}, [navigate]);
+	const openSessionArtifact = useCallback((session: WorkspaceSession, path: string) => {
+		useUiStore.getState().requestWorkspaceFileOpen(session.id, path, session.hostId, "artifact");
+		openSession(session);
+	}, [openSession]);
+	const openSessionArtifacts = useCallback((session: WorkspaceSession) => {
+		const uiKey = sessionUiKey(session.id, session.hostId);
+		useUiStore.getState().initializeInspectorSession(uiKey, Boolean(session.previewUrl), true);
+		useUiStore.getState().setInspectorView(uiKey, "artifacts");
+		useUiStore.getState().setInspectorOpen(uiKey, true);
+		openSession(session);
+	}, [openSession]);
+
+	// The project is the card's first identity; the host joins it once a second
+	// machine is connected, since only then is the host ambiguous.
+	const cardContext = (session: WorkspaceSession): string => {
+		let host: string | undefined;
+		if (hostCount > 0) host = session.hostId ? labelForHost(session.hostId) ?? session.hostId : t("shell.allProjectsThisComputer");
+		return [session.workspaceName, host].filter(Boolean).join(" · ");
+	};
+
+	return (
+		<div className="relative flex h-full min-h-0 flex-col bg-background text-foreground" data-testid="board" data-scope="all-projects">
+			<PageTopbar
+				lead={presentation.showWelcome ? undefined : (
+					<PageTopbarTitle data-testid="board-topbar-label">{t("shell.allProjects")}</PageTopbarTitle>
+				)}
+				actions={presentation.showWelcome ? undefined : memoryLight ?? undefined}
+			/>
+			{remoteWorkspaces.failedHostIds.length > 0 ? <p role="alert" className="px-4 py-3 text-sm text-destructive">{t("shell.couldNotLoadProjects")}</p> : null}
+
+			{/* Same archive reservation as a project board: the expanded archive overlays the lanes. */}
+			<div
+				className={cn("min-h-0 flex-1 overflow-hidden", hasArchive && archiveToggleOffsetClassName)}
+				style={hasArchive ? { clipPath: "inset(0 0 var(--sessions-archive-height, 58px) 0)" } : undefined}
+			>
+				{presentation.workspaceStartupState === "error" || localWorkspaceQuery.isError ? (
+					<p className="py-10 text-center text-xs text-passive">{t("shell.couldNotLoadSessions")}</p>
+				) : presentation.showWelcome ? (
+					<BoardWelcome />
+				) : (
+					<SessionsBoardGridView
+						columns={columns}
+						key={scopeKey}
+						labels={boardLabels}
+						renderSessionCard={(session) => (
+							<BoardSessionCardAdapter
+								context={cardContext(session)}
+								participants={session.hostId ? undefined : participantsBySession.get(session.id)}
+								me={cloudUserId}
+								memory={session.hostId ? undefined : memoryBySession?.get(session.id)}
+								memoryTone={session.hostId ? undefined : chipToneOf(session)}
+								onOpen={() => openSession(session)}
+								onOpenArtifact={(path) => openSessionArtifact(session, path)}
+								onOpenArtifacts={() => openSessionArtifacts(session)}
+								onTerminate={({ deleteArtifacts }) => terminateSession.mutate({ ...session, deleteArtifacts })}
+								session={session}
+							/>
+						)}
+						sessions={boardSessions}
+					/>
+				)}
+			</div>
+
+			{hasArchive ? (
+				<BoardArchivePanel
+					activeScopeRef={activeScopeRef}
+					scopeKey={scopeKey}
+					connected
+					sessions={archived}
+				/>
+			) : null}
+			{presentation.showStartup ? <DaemonStartupLoader /> : null}
+		</div>
+	);
+}
+
+/**
  * Restore state lives here so expand/collapse in SessionsArchiveView does not
  * re-render the kanban columns. In-flight restores are invalidated on project
  * change or unmount so completion cannot navigate after the user left.
@@ -429,10 +563,10 @@ const BoardArchivePanel = memo(function BoardArchivePanel({
 			return next;
 		});
 		try {
-			const result = await restoreSessionById(session.id, hostId);
+			const result = await restoreSessionById(session.id, session.hostId);
 			if (!isStillActiveProject()) return;
 			if (result.status === "success") {
-				void navigate(sessionNavigateTarget(session.workspaceId, session.id, hostId));
+				void navigate(sessionNavigateTarget(session.workspaceId, session.id, session.hostId));
 				return;
 			}
 			if (result.status === "not_resumable") {
@@ -471,12 +605,12 @@ const BoardArchivePanel = memo(function BoardArchivePanel({
 				<RestoreUnavailableDialog
 					open={true}
 					session={restoreUnavailableSession}
-					hostId={hostId}
+					hostId={restoreUnavailableSession.hostId ?? hostId}
 					onOpenChange={(open) => {
 						if (!open) setRestoreUnavailableSession(undefined);
 					}}
 					onRecreated={async () => {
-						await queryClient.invalidateQueries({ queryKey: workspaceQueryKeyForHost(hostId) });
+						await queryClient.invalidateQueries({ queryKey: workspaceQueryKeyForHost(restoreUnavailableSession.hostId ?? hostId) });
 					}}
 				/>
 			) : null}

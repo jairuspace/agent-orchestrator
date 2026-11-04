@@ -2123,6 +2123,8 @@
 	"settings.updates.error.reason.unreachable": "the update server couldn't be reached. Check your connection and try again.",
 	"settings.updates.error.reason.unreadableFeed": "the update information from the server couldn't be read. Try again in a few minutes.",
 	"settings.updates.error.reason.invalidSignature": "the update's signature couldn't be verified, so it was not installed. Download the latest build manually and install it over this one.",
+	"shell.allProjects": "All projects",
+	"shell.allProjectsThisComputer": "This computer",
 	"shell.archive": "Archive",
 	"shell.archiveSessionsAria_one": "Archive, {{count}} session",
 	"shell.archiveSessionsAria_other": "Archive, {{count}} sessions",

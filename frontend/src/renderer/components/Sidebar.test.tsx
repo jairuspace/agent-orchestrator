@@ -723,6 +723,22 @@ describe("Sidebar", () => {
 		expect(navigateMock).toHaveBeenCalledWith({ to: "/artifacts" });
 	});
 
+	it("opens All projects from its own row below Automations and marks it active on its route", async () => {
+		const user = userEvent.setup();
+		renderSidebar();
+
+		const automations = screen.getByRole("button", { name: "Automations" });
+		const allProjects = screen.getByRole("button", { name: "All projects" });
+		expect(automations.compareDocumentPosition(allProjects) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+		await user.click(allProjects);
+		expect(navigateMock).toHaveBeenCalledWith({ to: "/all-projects" });
+
+		mockLocation.pathname = "/all-projects";
+		renderSidebar();
+		const active = screen.getAllByRole("button", { name: "All projects" }).at(-1);
+		expect(active).toHaveAttribute("aria-current", "page");
+	});
+
 	it("omits the Artifacts count when there are none and marks the row active on its route", () => {
 		mockLocation.pathname = "/artifacts";
 		renderSidebar();

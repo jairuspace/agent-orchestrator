@@ -101,6 +101,7 @@ export function sessionsBoardLabels(t: TFunction): BoardColumnLabels {
 
 export function BoardSessionCardAdapter({
 	me,
+	context,
 	participants,
 	memory,
 	memoryTone,
@@ -124,10 +125,13 @@ export function BoardSessionCardAdapter({
 	participants?: readonly SessionPerson[];
 	/** The signed-in cloud user, to tell their own work from someone else's. */
 	me?: string;
+	/** Project and host shown above the title, when the board spans more than one. */
+	context?: string;
 }) {
 	return (
 		<DesktopSessionCard
 			me={me}
+			context={context}
 			participants={participants}
 			memory={memory}
 			memoryTone={memoryTone}
@@ -193,8 +197,21 @@ export function ArchivedSessionCardAdapter({
 	);
 }
 
+/** The label above a card's title: project and host, then whose session it is. */
+function cardTag(context: string | undefined, session: WorkspaceSession): ReactNode {
+	const owner = session.cloud?.requestedBy ? <SessionOwnerTag session={session} /> : null;
+	if (!context && !owner) return undefined;
+	return (
+		<span className="flex min-w-0 items-center gap-1.5">
+			{context ? <span className="min-w-0 truncate text-2xs text-muted-foreground" data-board-context>{context}</span> : null}
+			{owner}
+		</span>
+	);
+}
+
 function DesktopSessionCard({
 	me,
+	context,
 	participants,
 	action,
 	branchAction,
@@ -224,6 +241,7 @@ function DesktopSessionCard({
 	session: WorkspaceSession;
 	participants?: readonly SessionPerson[];
 	me?: string;
+	context?: string;
 	still?: boolean;
 }) {
 	const { t } = useTranslation();
@@ -342,7 +360,7 @@ function DesktopSessionCard({
 				url: prBrowserUrl(pr),
 			}))}
 			renderAvatar={(provider) => <AgentAvatar provider={provider} />}
-			tag={session.cloud?.requestedBy ? <SessionOwnerTag session={session} /> : undefined}
+			tag={cardTag(context, session)}
 			session={
 				hideTerminatedStatus
 					? hideTerminatedCardStatus(toBoardSessionPresentation(session))

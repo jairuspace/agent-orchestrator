@@ -1786,6 +1786,8 @@
 	"settings.updates.error.reason.unreachable": "无法连接到更新服务器。请检查网络连接后重试。",
 	"settings.updates.error.reason.unreadableFeed": "无法读取服务器上的更新信息。请几分钟后重试。",
 	"settings.updates.error.reason.invalidSignature": "无法验证更新的签名，因此未安装。请手动下载最新构建并覆盖安装当前版本。",
+	"shell.allProjects": "所有项目",
+	"shell.allProjectsThisComputer": "此计算机",
 	"shell.archive": "归档",
 	"shell.archiveSessionsAria_one": "归档，{{count}} 个会话",
 	"shell.archiveSessionsAria_other": "归档，{{count}} 个会话",

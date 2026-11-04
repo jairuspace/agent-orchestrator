@@ -1831,6 +1831,8 @@
 	"settings.updates.error.reason.unreachable": "não foi possível acessar o servidor de atualização. Verifique sua conexão e tente novamente.",
 	"settings.updates.error.reason.unreadableFeed": "não foi possível ler as informações de atualização do servidor. Tente novamente em alguns minutos.",
 	"settings.updates.error.reason.invalidSignature": "não foi possível verificar a assinatura da atualização, então ela não foi instalada. Baixe o build mais recente manualmente e instale-o por cima deste.",
+	"shell.allProjects": "Todos os projetos",
+	"shell.allProjectsThisComputer": "Este computador",
 	"shell.archive": "Arquivo",
 	"shell.archiveSessionsAria_one": "Arquivo, {{count}} sessão",
 	"shell.archiveSessionsAria_many": "Arquivo, {{count}} sessões",

@@ -1802,6 +1802,8 @@
 	"settings.updates.error.reason.unreachable": "アップデートサーバーに接続できませんでした。接続を確認してもう一度お試しください。",
 	"settings.updates.error.reason.unreadableFeed": "サーバーのアップデート情報を読み取れませんでした。数分後にもう一度お試しください。",
 	"settings.updates.error.reason.invalidSignature": "アップデートの署名を検証できなかったため、インストールしませんでした。最新のビルドを手動でダウンロードし、上書きインストールしてください。",
+	"shell.allProjects": "すべてのプロジェクト",
+	"shell.allProjectsThisComputer": "このコンピューター",
 	"shell.archive": "アーカイブ",
 	"shell.archiveSessionsAria_one": "アーカイブ、セッション {{count}} 件",
 	"shell.archiveSessionsAria_other": "アーカイブ、セッション {{count}} 件",

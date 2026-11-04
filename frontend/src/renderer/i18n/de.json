@@ -1802,6 +1802,8 @@
 	"settings.updates.error.reason.unreachable": "der Update-Server ist nicht erreichbar. Bitte die Verbindung prüfen und erneut versuchen.",
 	"settings.updates.error.reason.unreadableFeed": "die Update-Informationen vom Server konnten nicht gelesen werden. Bitte in einigen Minuten erneut versuchen.",
 	"settings.updates.error.reason.invalidSignature": "die Signatur des Updates konnte nicht überprüft werden, daher wurde es nicht installiert. Bitte den neuesten Build manuell herunterladen und über diese Version installieren.",
+	"shell.allProjects": "Alle Projekte",
+	"shell.allProjectsThisComputer": "Dieser Computer",
 	"shell.archive": "Archiv",
 	"shell.archiveSessionsAria_one": "Archiv, {{count}} Sitzung",
 	"shell.archiveSessionsAria_other": "Archiv, {{count}} Sitzungen",

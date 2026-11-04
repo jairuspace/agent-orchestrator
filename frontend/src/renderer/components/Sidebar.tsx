@@ -565,6 +565,7 @@ function useSelection() {
 	const goHome = useCallback(() => void navigate({ to: "/" }), [navigate]);
 	const goAutomations = useCallback(() => void navigate({ to: "/automations" }), [navigate]);
 	const goArtifacts = useCallback(() => void navigate({ to: "/artifacts" }), [navigate]);
+	const goAllProjects = useCallback(() => void navigate({ to: "/all-projects" }), [navigate]);
 	const goStandaloneBoard = useCallback(() => void navigate({ to: "/sessions" }), [navigate]);
 	const goGlobalSettings = useCallback(() => openGlobalSettings(), [openGlobalSettings]);
 	// Asking to connect a phone is the consent to turn Connect Mobile on, so the code starts preparing at once.
@@ -591,6 +592,7 @@ function useSelection() {
 		isHome: pathname === "/",
 		isAutomations: pathname === "/automations",
 		isArtifacts: pathname === "/artifacts",
+		isAllProjects: pathname === "/all-projects",
 		activeRemoteHostId: params.hostId,
 		activeRemoteProjectId: params.hostId ? params.projectId : undefined,
 		activeRemoteSessionId: params.hostId ? params.sessionId : undefined,
@@ -599,6 +601,7 @@ function useSelection() {
 		goHome,
 		goAutomations,
 		goArtifacts,
+		goAllProjects,
 		goStandaloneBoard,
 		// Settings is a modal — open it in place so the current page (session
 		// terminal, board, etc.) stays underneath.
@@ -607,7 +610,7 @@ function useSelection() {
 		goSettings,
 		goProject,
 		goSession,
-	}), [goArtifacts, goAutomations, goConnectMobile, goGlobalSettings, goHome, goProject, goSession, goSettings, goStandaloneBoard, params.hostId, params.projectId, params.sessionId, pathname]);
+	}), [goAllProjects, goArtifacts, goAutomations, goConnectMobile, goGlobalSettings, goHome, goProject, goSession, goSettings, goStandaloneBoard, params.hostId, params.projectId, params.sessionId, pathname]);
 }
 
 // A row spins while its agent works, ahead of any PR state: it may already be
@@ -1189,6 +1192,15 @@ export function Sidebar({
 							label={t("automations.title")}
 							onClick={selection.goAutomations}
 							tooltip={isCollapsed ? t("automations.title") : undefined}
+						/>
+					</SidebarMenuItem>
+					<SidebarMenuItem>
+						<SidebarTopNavRow
+							active={selection.isAllProjects}
+							icon={<LayoutGrid aria-hidden="true" />}
+							label={t("shell.allProjects")}
+							onClick={selection.goAllProjects}
+							tooltip={isCollapsed ? t("shell.allProjects") : undefined}
 						/>
 					</SidebarMenuItem>
 					<SidebarMenuItem>

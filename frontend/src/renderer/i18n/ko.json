@@ -1802,6 +1802,8 @@
 	"settings.updates.error.reason.unreachable": "업데이트 서버에 연결할 수 없습니다. 연결을 확인하고 다시 시도하세요.",
 	"settings.updates.error.reason.unreadableFeed": "서버의 업데이트 정보를 읽을 수 없습니다. 몇 분 후에 다시 시도하세요.",
 	"settings.updates.error.reason.invalidSignature": "업데이트 서명을 확인할 수 없어 설치하지 않았습니다. 최신 빌드를 직접 다운로드해 현재 버전 위에 설치하세요.",
+	"shell.allProjects": "모든 프로젝트",
+	"shell.allProjectsThisComputer": "이 컴퓨터",
 	"shell.archive": "보관",
 	"shell.archiveSessionsAria_one": "보관, 세션 {{count}}개",
 	"shell.archiveSessionsAria_other": "보관, 세션 {{count}}개",
